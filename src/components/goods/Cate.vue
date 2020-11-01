@@ -41,8 +41,10 @@
         </template>
         <!-- 操作 -->
         <template slot="opt" slot-scope="scope">
-            <el-button type="primary" size="mini">编辑</el-button>
-            <el-button type="danger" size="mini">删除</el-button>
+            <el-button type="primary" size="mini" 
+            @click="showEditDialog(scope.row.cat_id,scope.row.cat_name)">编辑</el-button>
+            <el-button type="danger" size="mini" 
+            @click="removeUserById(scope.row.id)">删除</el-button>
         </template>
        </tree-table>
        <!-- 分页区域 -->
@@ -81,7 +83,23 @@
     <el-button type="primary" @click="addCateDialogVisible = false">确 定</el-button>
   </span>
 </el-dialog>
-
+ <!-- 修改用户的对话框 -->
+    <el-dialog
+  title="修改用户"
+  :visible.sync="editDialogVisible"
+  width="50%" @close="editDialogClosed"
+  >
+ <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" 
+ label-width="70px" class="demo-ruleForm" status-icon>
+  <el-form-item label="用户名" prop="cat_name">
+    <el-input v-model="editForm.cat_name" ></el-input>
+  </el-form-item>
+ </el-form>
+  <span slot="footer" class="dialog-footer">
+    <el-button @click="editDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="editUserInfo">确 定</el-button>
+  </span>
+</el-dialog>
   </div>
 </template>
 
@@ -144,7 +162,21 @@ export default {
                 children:'children',
 
             },
-            selectedKeys:[]
+            selectedKeys:[],
+            editDialogVisible:false,
+              editForm:{
+
+        },
+         editFormRules:{
+         roleName:[
+          {
+            require:true,message:'请输入用户名',
+            trigger:'blur'
+          },
+         
+        ]
+      },
+      cat_name:''
         }
     },
     created(){
@@ -192,7 +224,68 @@ export default {
     },
     parentCateChanged(){
         console.log(this.selectedKeys);
-    }
+    },
+     async removeUserById(id){
+      console.log(id);
+      //弹框询问用户是否删除数据
+       const confirmResult = await this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).catch(err => {
+          return err
+        })
+        console.log(confirmResult);
+        if(confirmResult !== 'confirm'){
+          return this.$message.info('已取消删除')
+        }
+        // console.log('确认了删除');
+        const{data:res}=await this.$http.delete('categories/'+ id)
+        if(res.meta.status !== 200){
+          return this.$message.error('删除商品失败')
+        }
+        this.$message.success('删除商品成功')
+        this.getCateList()
+    },
+   async showEditDialog(id){
+
+const{data:res}= await this.$http.get(`categories/${id}`)
+console.log('res', res)
+      this.editDialogVisible = true
+       if (res.meta.status !== 200) {
+          this.$message.error("添加用户信息失败");
+        console.log('res', res)
+        }
+        this.editForm=res.data
+         this.editDialogVisible = true
+    },
+      //监听修改用户对话框的关闭事件
+      editDialogClosed(){
+      this.$refs.editFormRef.resetFields()
+    },
+    editUserInfo(){
+      this.$refs.editFormRef.validate(async valid=>{
+        console.log(valid);
+        if(!valid) return
+        //发起修改用户信息的数据请求
+        console.log('editForm', this.editForm)
+       const {data:res} = await this.$http.put('categories/'+this.editForm.cat_id,{
+         cat_name:this.editForm.cat_name
+        })
+        console.log('res', res)
+        if(res.meta.status !==200 ){
+          return this.$message.err('更新用户信息失败')
+
+        }
+        //关闭对话框
+        this.editDialogVisible = false
+        //刷新数据列表
+        this.getCateList()
+        
+        //提示修改成功
+        this.$message.success('更新用户信息成功')
+      })
+    },
     },
     
 }

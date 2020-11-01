@@ -50,6 +50,7 @@
         </el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
+            <!-- 编辑按钮 -->
             <el-button type="primary" icon="el-icon-edit" size="mini"
             @click="showEditDialog(scope.row.id)">
             </el-button>
@@ -121,7 +122,7 @@
       <!-- 底部区域 -->
       <span slot="footer" class="dialog-footer">
         <el-button @click="addDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="editUserInfo">确 定</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
     <!-- 修改用户的对话框 -->
