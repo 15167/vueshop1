@@ -11,7 +11,7 @@
       <!-- 添加角色按钮区域 -->
       <el-row>
         <el-col>
-          <el-button type="primary">添加角色</el-button>
+          <el-button type="primary" @click="addDialogVisible=true">添加角色</el-button>
         </el-col>
       </el-row>
       <!-- 角色列表 -->
@@ -86,6 +86,25 @@
         </el-table-column>
       </el-table>
     </el-card>
+    <!-- 添加角色的对话框 -->
+    <el-dialog
+  title="添加角色"
+  :visible.sync="addDialogVisible"
+  width="50%"
+  >
+  <!-- 内容主体区域 -->
+ <el-form :model="addForm" :rules="addFormRules" 
+ ref="addFormRef" label-width="70px" class="demo-ruleForm">
+  <el-form-item label="用户名" prop="username">
+    <el-input v-model="addForm.username"></el-input>
+  </el-form-item>
+ </el-form>
+  <!-- 底部区域 -->
+  <span slot="footer" class="dialog-footer">
+    <el-button @click="addDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="addDialogVisible = false">确 定</el-button>
+  </span>
+</el-dialog>
     <!-- 分配权限的对话框 -->
     <el-dialog
   title="分配权限"
@@ -121,7 +140,22 @@ export default {
       //默认选中的节点id值
       defKeys:[105,116],
       //当前即将分配角色的id
-      roleId:''
+      roleId:'',
+      //控制添加用户对话框的显示与隐藏
+      addDialogVisible:false,
+      //添加用户的表单数据
+      addForm:{
+        username:''
+      },
+      addFormRules:{
+        username:[
+          {
+            require:true,message:'请输入用户名',
+            trigger:'blur'
+          },{min:3,max:10,message:'用户名的长度在3-10个之间',
+          trigger:'blur'}
+        ]
+      }
     };
   },
   created() {
@@ -136,6 +170,22 @@ export default {
       }
       this.rolelist = res.data;
       console.log(this.rolelist);
+    },
+    //添加角色
+    addUser() {
+      this.$refs.addFormRef.validate(async (valid) => {
+        console.log(valid);
+        if (!valid) return;
+        //可以发起添加用户的网络请求
+        const { data: res } = await this.$http.post("roles", this.addForm);
+        if (res.meta.status !== 201) {
+          this.$message.error("添加用户失败");
+        }
+        this.$message.success("添加用户成功");
+        //隐藏添加用户的对话框
+        this.addDialogVisible = false;
+        this.getRolesList();
+      });
     },
     //根据id删除对应的权限
     async removeRightById(role, rightId) {
